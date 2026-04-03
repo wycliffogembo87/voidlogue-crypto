@@ -32,7 +32,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/voidlogue/voidlogue-crypto.git"
+    "url": "git+https://github.com/voidlogue/voidlogue-crypto.git"
   },
   "homepage": "https://voidlogue.com",
   "bugs": {
