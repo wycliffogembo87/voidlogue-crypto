@@ -1,6 +1,6 @@
 {
   "name": "voidlogue-crypto",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Open-source client-side cryptographic primitives for Voidlogue — published for independent audit and verification of privacy claims.",
   "main": "index.js",
   "type": "module",
