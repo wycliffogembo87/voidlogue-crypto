@@ -43,11 +43,17 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
-    "vitest": "^1.0.0"
+    "vitest": "^1.0.0",
+    "prettier": "^3.0.0",
+    "eslint": "^8.0.0",
+    "@eslint/js": "^8.0.0"
   },
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "format": "prettier --write \"src/**/*.js\" \"test/**/*.js\" \"*.js\"",
+    "lint": "eslint src test *.js",
+    "lint:fix": "eslint src test *.js --fix"
   },
   "publishConfig": {
     "access": "public",

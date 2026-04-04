@@ -14,7 +14,7 @@
  *
  * Cryptographic primitives:
  *   Hashing:         SHA-256 via SubtleCrypto.digest
- *   Key derivation:  PBKDF2 (SHA-256, 100,000 iterations)
+ *   Key derivation:  PBKDF2 (SHA-256, 600,000 iterations)
  *   Encryption:      AES-256-GCM with random 96-bit IV per message
  *   Randomness:      crypto.getRandomValues (rejection-sampling for uniformity)
  *
@@ -27,23 +27,26 @@
  *     the server never holds. Delivery does not require decryption.
  */
 
-import { EFF_WORDLIST } from "./eff_wordlist.js";
+import { EFF_WORDLIST } from './eff_wordlist.js';
 
 // ── INTERNAL CONSTANTS ────────────────────────────────────────────────────
 // These salts are intentionally public — security depends on key secrecy,
 // not salt secrecy. Published here for independent verification.
-const APP_SALT    = "voidlogue-v1-room-salt-2026";
-const REV_SALT    = "voidlogue-revelation-v1";
-const PBKDF2_ITER = 100_000;
+const APP_SALT = 'voidlogue-v1-room-salt-2026';
+const REV_SALT = 'voidlogue-revelation-v1';
+const PBKDF2_ITER = 600_000;
 const CHUNK_BYTES = 256 * 1024; // 256 KB per media chunk
-const ENC         = new TextEncoder();
-const DEC         = new TextDecoder();
+const ENC = new TextEncoder();
+const DEC = new TextDecoder();
 
 // ── BASE64 HELPERS ────────────────────────────────────────────────────────
-const b64  = buf =>
-  btoa(String.fromCharCode(...new Uint8Array(buf instanceof ArrayBuffer ? buf : buf.buffer)));
-const ub64 = s =>
-  Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const b64 = (buf) =>
+  btoa(
+    String.fromCharCode(
+      ...new Uint8Array(buf instanceof ArrayBuffer ? buf : buf.buffer)
+    )
+  );
+const ub64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
 // ── VOIDSHIELD ────────────────────────────────────────────────────────────
 
@@ -54,7 +57,6 @@ const ub64 = s =>
  * Safe to use in any JavaScript environment that provides the Web Crypto API.
  */
 export const VoidShield = {
-
   // ── Hashing ──────────────────────────────────────────────────────────────
 
   /**
@@ -63,10 +65,10 @@ export const VoidShield = {
    * @returns {Promise<string>} 64-character hex string
    */
   async hex(input) {
-    const buf = await crypto.subtle.digest("SHA-256", ENC.encode(input));
+    const buf = await crypto.subtle.digest('SHA-256', ENC.encode(input));
     return [...new Uint8Array(buf)]
-      .map(b => b.toString(16).padStart(2, "0"))
-      .join("");
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
   },
 
   // ── Conversation ─────────────────────────────────────────────────────────
@@ -93,7 +95,7 @@ export const VoidShield = {
       this.hex(emailA.toLowerCase().trim()),
       this.hex(emailB.toLowerCase().trim()),
     ]);
-    return this.hex(`${[hA, hB].sort().join(":")}:${codename}:${APP_SALT}`);
+    return this.hex(`${[hA, hB].sort().join(':')}:${codename}:${APP_SALT}`);
   },
 
   /**
@@ -103,13 +105,22 @@ export const VoidShield = {
    */
   validateCodename(codename) {
     if (!codename || codename.length < 8)
-      return { valid: false, reason: "Codename must be at least 8 characters." };
+      return {
+        valid: false,
+        reason: 'Codename must be at least 8 characters.',
+      };
     if (codename.length > 128)
-      return { valid: false, reason: "Codename must be 128 characters or less." };
+      return {
+        valid: false,
+        reason: 'Codename must be 128 characters or less.',
+      };
     if (/^\d+$/.test(codename))
-      return { valid: false, reason: "Codename cannot be only numbers." };
+      return { valid: false, reason: 'Codename cannot be only numbers.' };
     if (new Set(codename.toLowerCase()).size < 4)
-      return { valid: false, reason: "Codename must have at least 4 unique characters." };
+      return {
+        valid: false,
+        reason: 'Codename must have at least 4 unique characters.',
+      };
     return { valid: true };
   },
 
@@ -125,14 +136,23 @@ export const VoidShield = {
    */
   async deriveKey(codename, roomHash) {
     const km = await crypto.subtle.importKey(
-      "raw", ENC.encode(codename), "PBKDF2", false, ["deriveKey"]
+      'raw',
+      ENC.encode(codename),
+      'PBKDF2',
+      false,
+      ['deriveKey']
     );
     return crypto.subtle.deriveKey(
-      { name: "PBKDF2", salt: ENC.encode(roomHash), iterations: PBKDF2_ITER, hash: "SHA-256" },
+      {
+        name: 'PBKDF2',
+        salt: ENC.encode(roomHash),
+        iterations: PBKDF2_ITER,
+        hash: 'SHA-256',
+      },
       km,
-      { name: "AES-GCM", length: 256 },
+      { name: 'AES-GCM', length: 256 },
       false,
-      ["encrypt", "decrypt"]
+      ['encrypt', 'decrypt']
     );
   },
 
@@ -147,7 +167,9 @@ export const VoidShield = {
   async encrypt(plaintext, key) {
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const ct = await crypto.subtle.encrypt(
-      { name: "AES-GCM", iv }, key, ENC.encode(plaintext)
+      { name: 'AES-GCM', iv },
+      key,
+      ENC.encode(plaintext)
     );
     return { ciphertextB64: b64(ct), ivB64: b64(iv) };
   },
@@ -164,7 +186,9 @@ export const VoidShield = {
    */
   async decrypt(ciphertextB64, ivB64, key) {
     const pt = await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv: ub64(ivB64) }, key, ub64(ciphertextB64)
+      { name: 'AES-GCM', iv: ub64(ivB64) },
+      key,
+      ub64(ciphertextB64)
     );
     return DEC.decode(pt);
   },
@@ -181,14 +205,25 @@ export const VoidShield = {
    */
   async encryptMedia(file, key) {
     const buffer = await file.arrayBuffer();
-    const total  = Math.ceil(buffer.byteLength / CHUNK_BYTES);
+    const total = Math.ceil(buffer.byteLength / CHUNK_BYTES);
     const chunks = [];
-    for (let i = 0, offset = 0; offset < buffer.byteLength; i++, offset += CHUNK_BYTES) {
+    for (
+      let i = 0, offset = 0;
+      offset < buffer.byteLength;
+      i++, offset += CHUNK_BYTES
+    ) {
       const iv = crypto.getRandomValues(new Uint8Array(12));
       const ct = await crypto.subtle.encrypt(
-        { name: "AES-GCM", iv }, key, buffer.slice(offset, offset + CHUNK_BYTES)
+        { name: 'AES-GCM', iv },
+        key,
+        buffer.slice(offset, offset + CHUNK_BYTES)
       );
-      chunks.push({ ciphertextB64: b64(ct), ivB64: b64(iv), index: i, totalChunks: total });
+      chunks.push({
+        ciphertextB64: b64(ct),
+        ivB64: b64(iv),
+        index: i,
+        totalChunks: total,
+      });
     }
     return chunks;
   },
@@ -203,7 +238,9 @@ export const VoidShield = {
   async *decryptMediaStream(chunks, key) {
     for (const c of [...chunks].sort((a, b) => a.index - b.index)) {
       yield await crypto.subtle.decrypt(
-        { name: "AES-GCM", iv: ub64(c.ivB64) }, key, ub64(c.ciphertextB64)
+        { name: 'AES-GCM', iv: ub64(c.ivB64) },
+        key,
+        ub64(c.ciphertextB64)
       );
     }
   },
@@ -229,17 +266,28 @@ export const VoidShield = {
       this.hex(senderEmail.toLowerCase().trim()),
       this.hex(recipientEmail.toLowerCase().trim()),
     ]);
-    const fh = await Promise.all(fieldValues.map(v => this.hex(this._norm(v))));
-    const input = [[hS, hR].sort().join(":"), ...fh].join(":");
+    const fh = await Promise.all(
+      fieldValues.map((v) => this.hex(this._norm(v)))
+    );
+    const input = [[hS, hR].sort().join(':'), ...fh].join(':');
     const km = await crypto.subtle.importKey(
-      "raw", ENC.encode(input), "PBKDF2", false, ["deriveKey"]
+      'raw',
+      ENC.encode(input),
+      'PBKDF2',
+      false,
+      ['deriveKey']
     );
     return crypto.subtle.deriveKey(
-      { name: "PBKDF2", salt: ENC.encode(REV_SALT), iterations: PBKDF2_ITER, hash: "SHA-256" },
+      {
+        name: 'PBKDF2',
+        salt: ENC.encode(REV_SALT),
+        iterations: PBKDF2_ITER,
+        hash: 'SHA-256',
+      },
       km,
-      { name: "AES-GCM", length: 256 },
+      { name: 'AES-GCM', length: 256 },
       false,
-      ["encrypt", "decrypt"]
+      ['encrypt', 'decrypt']
     );
   },
 
@@ -255,18 +303,36 @@ export const VoidShield = {
    * @param {string[]} fieldValues      raw security field values
    * @returns {Promise<CryptoKey>}
    */
-  async deriveRevelationKeyFromHashes(senderEmailHash, recipientEmailHash, fieldValues = []) {
-    const fh = await Promise.all(fieldValues.map(v => this.hex(this._norm(v))));
-    const input = [[senderEmailHash, recipientEmailHash].sort().join(":"), ...fh].join(":");
+  async deriveRevelationKeyFromHashes(
+    senderEmailHash,
+    recipientEmailHash,
+    fieldValues = []
+  ) {
+    const fh = await Promise.all(
+      fieldValues.map((v) => this.hex(this._norm(v)))
+    );
+    const input = [
+      [senderEmailHash, recipientEmailHash].sort().join(':'),
+      ...fh,
+    ].join(':');
     const km = await crypto.subtle.importKey(
-      "raw", ENC.encode(input), "PBKDF2", false, ["deriveKey"]
+      'raw',
+      ENC.encode(input),
+      'PBKDF2',
+      false,
+      ['deriveKey']
     );
     return crypto.subtle.deriveKey(
-      { name: "PBKDF2", salt: ENC.encode(REV_SALT), iterations: PBKDF2_ITER, hash: "SHA-256" },
+      {
+        name: 'PBKDF2',
+        salt: ENC.encode(REV_SALT),
+        iterations: PBKDF2_ITER,
+        hash: 'SHA-256',
+      },
       km,
-      { name: "AES-GCM", length: 256 },
+      { name: 'AES-GCM', length: 256 },
       false,
-      ["encrypt", "decrypt"]
+      ['encrypt', 'decrypt']
     );
   },
 
@@ -310,7 +376,9 @@ export const VoidShield = {
   secureRandom(max) {
     const buf = new Uint32Array(1);
     const lim = Math.floor(0x100000000 / max) * max;
-    do { crypto.getRandomValues(buf); } while (buf[0] >= lim);
+    do {
+      crypto.getRandomValues(buf);
+    } while (buf[0] >= lim);
     return buf[0] % max;
   },
 
@@ -322,7 +390,10 @@ export const VoidShield = {
    * @internal
    */
   _norm(v) {
-    return String(v).toLowerCase().replace(/[\s\-_.]/g, "").trim();
+    return String(v)
+      .toLowerCase()
+      .replace(/[\s\-_.]/g, '')
+      .trim();
   },
 };
 
@@ -349,5 +420,5 @@ export function generateCodename(wordCount = 3) {
   for (let i = 0; i < count; i++) {
     words.push(EFF_WORDLIST[VoidShield.secureRandom(EFF_WORDLIST.length)]);
   }
-  return words.join("-");
+  return words.join('-');
 }

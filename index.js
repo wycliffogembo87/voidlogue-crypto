@@ -8,6 +8,6 @@
  * @module voidlogue-crypto
  */
 
-export { VoidShield, generateCodename } from "./src/voidshield.js";
-export { Vault, LabelCipher } from "./src/vault.js";
-export { EFF_WORDLIST } from "./src/eff_wordlist.js";
+export { VoidShield, generateCodename } from './src/voidshield.js';
+export { Vault, LabelCipher } from './src/vault.js';
+export { EFF_WORDLIST } from './src/eff_wordlist.js';

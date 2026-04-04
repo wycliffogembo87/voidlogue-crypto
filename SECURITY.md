@@ -27,7 +27,7 @@ cannot reverse this to learn the email addresses or the codename.
 The encryption key is derived from the codename:
 
 ```
-key = PBKDF2(codename, salt=roomHash, iterations=100_000, hash=SHA-256)
+key = PBKDF2(codename, salt=roomHash, iterations=600_000, hash=SHA-256)
      → AES-256-GCM key (non-extractable)
 ```
 
@@ -50,7 +50,7 @@ hR    = SHA-256(recipientEmail.toLowerCase().trim())
 fh[]  = SHA-256(normalise(fieldValue)) for each security field
 
 input = sort([hS, hR]).join(":") + ":" + fh.join(":")
-key   = PBKDF2(input, salt="voidlogue-revelation-v1", iterations=100_000)
+key   = PBKDF2(input, salt="voidlogue-revelation-v1", iterations=600_000)
       → AES-256-GCM key
 ```
 
@@ -73,7 +73,7 @@ The Vault encrypts the user's email and codename on-device before storing
 them in `localStorage`:
 
 ```
-key  = PBKDF2(PIN, random_salt, iterations=100_000) → AES-256-GCM key
+key  = PBKDF2(PIN, random_salt, iterations=600_000) → AES-256-GCM key
 blob = AES-256-GCM(JSON({email, codename}), key, random_IV)
 ```
 
@@ -88,7 +88,7 @@ ciphertext that cannot be decrypted without the PIN.
 | Primitive | Algorithm | Rationale |
 |---|---|---|
 | Symmetric encryption | AES-256-GCM | NIST-approved; provides authenticated encryption (tamper detection) |
-| Key derivation | PBKDF2, SHA-256, 100k iterations | Standardised; makes brute-force computationally expensive |
+| Key derivation | PBKDF2, SHA-256, 600k iterations | Standardised; makes brute-force computationally expensive |
 | Hashing | SHA-256 | Collision-resistant; output is 256 bits |
 | Randomness | `crypto.getRandomValues` with rejection sampling | Cryptographically secure; rejection sampling eliminates modular bias |
 
