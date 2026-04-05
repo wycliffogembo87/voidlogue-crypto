@@ -52,7 +52,7 @@
     "fast-check": "^3.23.2",
     "prettier": "^3.0.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.0.0",
+    "typescript": "^6.0.2",
     "typescript-eslint": "^8.58.0"
   },
   "scripts": {
