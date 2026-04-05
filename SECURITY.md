@@ -10,7 +10,7 @@ against the actual code running in the browser.
 
 ### Claim 1: "We cannot read your Conversation messages"
 
-**Code that proves it:** `src/voidshield.ts` — `roomId()`, `deriveKey()`, `encrypt()`
+**Code that proves it:** `src/voidshield.ts` — `relationshipHash()`, `roomId()`, `deriveKey()`, `encrypt()`
 
 Room hashes are derived entirely client-side from the pair of email addresses
 and the shared codename. The algorithm:
@@ -18,7 +18,8 @@ and the shared codename. The algorithm:
 ```
 hA       = SHA-256(emailA.toLowerCase().trim())
 hB       = SHA-256(emailB.toLowerCase().trim())
-roomHash = SHA-256(sort([hA, hB]).join(":") + ":" + codename + ":" + APP_SALT)
+relHash  = SHA-256(sort([hA, hB]).join(":") + ":" + APP_SALT + ":relationship")
+roomHash = SHA-256(relHash + ":" + codename + ":" + APP_SALT)
 ```
 
 The server receives only `roomHash` — an opaque 64-character hex string. It

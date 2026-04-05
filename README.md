@@ -66,6 +66,8 @@ const codename = generateCodename(4); // e.g. "correct-horse-battery-staple"
 | Method | Description |
 |---|---|
 | `hex(input)` | SHA-256 of input string → 64-char hex |
+| `relationshipHash(emailA, emailB)` | Pure relationship identifier. Commutative. |
+| `isInitiator(myEmail, theirEmail)` | Deterministic tie-breaker for UI deadlocks |
 | `roomId(emailA, emailB, codename)` | Derives opaque room hash. Commutative. |
 | `validateCodename(codename)` | Returns `{ valid, reason? }` |
 | `deriveKey(codename, roomHash)` | PBKDF2 → AES-256-GCM key (non-extractable) |
@@ -138,7 +140,8 @@ console.log(EFF_WORDLIST.length); // 7776
 ```
 Room hash:
   hA, hB   = SHA-256(email.toLowerCase().trim())
-  roomHash = SHA-256(sort([hA,hB]).join(":") + ":" + codename + ":" + APP_SALT)
+  relHash  = SHA-256(sort([hA,hB]).join(":") + ":" + APP_SALT + ":relationship")
+  roomHash = SHA-256(relHash + ":" + codename + ":" + APP_SALT)
 
 Conversation key:
   key = PBKDF2(codename, salt=roomHash, iters=600_000, hash=SHA-256) → AES-256-GCM

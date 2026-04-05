@@ -66,6 +66,7 @@ export interface KyberKeyPair {
 export interface VoidShieldAPI {
   hex(input: string): Promise<string>;
   relationshipHash(emailA: string, emailB: string): Promise<string>;
+  isInitiator(myEmail: string, theirEmail: string): Promise<boolean>;
   roomId(emailA: string, emailB: string, codename: string): Promise<string>;
   validateCodename(codename: string): CodenameValidation;
   deriveKey(codename: string, roomHash: string): Promise<CryptoKey>;
@@ -217,6 +218,12 @@ export const VoidShield: VoidShieldAPI = {
       this.hex(emailB.toLowerCase().trim()),
     ]);
     return this.hex(`${[hA, hB].sort().join(':')}:${APP_SALT}:relationship`);
+  },
+
+  async isInitiator(myEmail: string, theirEmail: string): Promise<boolean> {
+    const hashMe = await this.hex(myEmail.toLowerCase().trim());
+    const hashThem = await this.hex(theirEmail.toLowerCase().trim());
+    return hashMe < hashThem;
   },
 
   async roomId(
