@@ -259,18 +259,18 @@ export const Vault = {
     roomHash: string,
     email: string,
     codename: string,
-    newPin: string
+    newPin: string,
+    existingHintEntry?: LabelEntry
   ): Promise<boolean> {
-    const entry = this._getEncryptedHint(roomHash);
-    // entry is always an object ({encrypted:'', iv:'', …}) for unlabelled convos,
-    // so we must check entry?.encrypted (non-empty string) — not just entry.
-    return this.save(
-      roomHash,
-      email,
-      codename,
-      newPin,
-      entry?.encrypted ? '(restored)' : ''
-    );
+    // Save as ghost (no hint) — avoids re-encrypting the label under the new
+    // PIN key, which would create a new index entry and make ghosts visible.
+    const ok = await this.save(roomHash, email, codename, newPin, '');
+    // If the caller supplies the original encrypted label entry, restore it
+    // verbatim — no re-encryption needed since labels are keyed independently.
+    if (ok && existingHintEntry?.encrypted) {
+      await this._updateIndex(roomHash, existingHintEntry);
+    }
+    return ok;
   },
 
   async updateLabel(
