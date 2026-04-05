@@ -41,6 +41,46 @@ describe('VoidShield.hex', () => {
   });
 });
 
+// ── VoidShield.relationshipHash ────────────────────────────────────────────
+
+describe('VoidShield.relationshipHash', () => {
+  it('returns a 64-character hex string', async () => {
+    const hash = await VoidShield.relationshipHash('alice@example.com', 'bob@example.com');
+    expect(hash).toHaveLength(64);
+    expect(hash).toMatch(/^[0-9a-f]+$/);
+  });
+
+  it('is commutative — order of emails does not matter', async () => {
+    const h1 = await VoidShield.relationshipHash('alice@example.com', 'bob@example.com');
+    const h2 = await VoidShield.relationshipHash('bob@example.com', 'alice@example.com');
+    expect(h1).toBe(h2);
+  });
+
+  it('is deterministic — same inputs always produce same hash', async () => {
+    const h1 = await VoidShield.relationshipHash('alice@example.com', 'bob@example.com');
+    const h2 = await VoidShield.relationshipHash('alice@example.com', 'bob@example.com');
+    expect(h1).toBe(h2);
+  });
+
+  it('different email pairs produce different hashes', async () => {
+    const h1 = await VoidShield.relationshipHash('alice@example.com', 'bob@example.com');
+    const h2 = await VoidShield.relationshipHash('charlie@example.com', 'bob@example.com');
+    expect(h1).not.toBe(h2);
+  });
+
+  it('normalises email case — uppercase and lowercase produce same hash', async () => {
+    const h1 = await VoidShield.relationshipHash('Alice@Example.COM', 'bob@example.com');
+    const h2 = await VoidShield.relationshipHash('alice@example.com', 'bob@example.com');
+    expect(h1).toBe(h2);
+  });
+
+  it('does not reveal raw email identity', async () => {
+    const hash = await VoidShield.relationshipHash('alice@example.com', 'bob@example.com');
+    expect(hash).not.toContain('alice');
+    expect(hash).not.toContain('bob');
+  });
+});
+
 // ── VoidShield.roomId ──────────────────────────────────────────────────────
 
 describe('VoidShield.roomId', () => {

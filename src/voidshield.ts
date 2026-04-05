@@ -65,6 +65,7 @@ export interface KyberKeyPair {
 
 export interface VoidShieldAPI {
   hex(input: string): Promise<string>;
+  relationshipHash(emailA: string, emailB: string): Promise<string>;
   roomId(emailA: string, emailB: string, codename: string): Promise<string>;
   validateCodename(codename: string): CodenameValidation;
   deriveKey(codename: string, roomHash: string): Promise<CryptoKey>;
@@ -210,16 +211,21 @@ export const VoidShield: VoidShieldAPI = {
 
   // ── Conversation ─────────────────────────────────────────────────────────
 
+  async relationshipHash(emailA: string, emailB: string): Promise<string> {
+    const [hA, hB] = await Promise.all([
+      this.hex(emailA.toLowerCase().trim()),
+      this.hex(emailB.toLowerCase().trim()),
+    ]);
+    return this.hex(`${[hA, hB].sort().join(':')}:${APP_SALT}:relationship`);
+  },
+
   async roomId(
     emailA: string,
     emailB: string,
     codename: string
   ): Promise<string> {
-    const [hA, hB] = await Promise.all([
-      this.hex(emailA.toLowerCase().trim()),
-      this.hex(emailB.toLowerCase().trim()),
-    ]);
-    return this.hex(`${[hA, hB].sort().join(':')}:${codename}:${APP_SALT}`);
+    const relHash = await this.relationshipHash(emailA, emailB);
+    return this.hex(`${relHash}:${codename}:${APP_SALT}`);
   },
 
   validateCodename(codename: string): CodenameValidation {
